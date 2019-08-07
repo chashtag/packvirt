@@ -1,0 +1,56 @@
+---
+- name: Print disk selection
+  debug:
+    msg: "{{ (ansible_facts.devices |select('match', '^(vd|sd)[a-z]+') |list)[1:] }}"
+    verbosity : 1
+
+- name: Set disklist
+  set_fact:
+    disklist: "{{ (ansible_facts.devices | select('match', '^(vd|sd)[a-z]+') | list)[1:] }}"
+
+- name: Check 2 or more extra disks
+  failed_when: (disklist | count) <2
+  debug: 
+    msg: "{{ disklist | count }}"
+
+- name: Create a xfs filesystem on extra disks
+  filesystem:
+    fstype: xfs
+    dev: "/dev/{{ item }}"
+  with_items: "{{ disklist }}"
+
+- name: Create mounts
+  mount:
+    src: "/dev/{{ item.d }}"
+    path: "/var/mounts/{{ item.p }}"
+    state: mounted
+    fstype: xfs
+  with_items: "{{[{'d':'vdb','p':'engine'},{'d':'vdc','p':'vmstore'}][:(disklist | count)+1]}}"
+
+- name: Create Brick dirs
+  file:
+    path: "/var/mounts/{{ item.p }}/brick"
+    state: directory
+    owner: "36"
+    group: "36"
+    mode: 0755
+  with_items: "{{[{'d':'vdb','p':'engine'},{'d':'vdc','p':'vmstore'}][:(disklist | count)+1]}}"
+
+- name: Enable and start gluster
+  service:
+    name: glusterd
+    state: started
+    enabled: yes
+
+- name: Create gluster volume
+  gluster_volume:
+    state: present
+    name: "{{ item.p }}"
+    bricks: "/var/mounts/{{ item.p }}/brick"
+    cluster:
+      - "{{ ansible_default_ipv4.address }}"
+    options:
+      storage.owner-uid: "36"
+      storage.owner-gid: "36"
+  with_items: "{{[{'d':'vdb','p':'engine'},{'d':'vdc','p':'vmstore'}][:(disklist | count)+1]}}"
+    

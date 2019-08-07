@@ -1,0 +1,29 @@
+---
+- hosts: localhost
+  pre_tasks: 
+    - name: Disable ipv6
+      shell: |
+        sysctl -w net.ipv6.conf.all.disable_ipv6=1
+        sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+    - name: Check for rhvm-appliance
+      find:
+        paths: /root
+        patterns: 'rhvm-appliance-4.3-*.el7.ova'
+      register: rhvm_appliance
+
+    - name: Fail if we can't find an appliance
+      failed_when: ansible_distribution == "RedHat" and rhvm_appliance.files | count < 1 
+      debug: 
+        msg: "Found image, or not RHEL"
+
+    - hostname:
+        name: 'node.{% if ansible_distribution == "RedHat" %}rhvh{% else %}ovirt{%endif%}'
+  roles:
+    - role: common
+    - role: disks
+    - role: engine-install
+      
+
+
+

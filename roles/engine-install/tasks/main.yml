@@ -1,0 +1,41 @@
+---
+- name: Render hosted-engine template
+  template:
+    src: files/he.af.j2
+    dest: /root/he.af
+
+- name: Check if already deployed
+  failed_when: false
+  shell: hosted-engine --vm-status
+  register: he
+
+- name: Run hosted-engine setup
+  when: he.rc > 0
+  shell: hosted-engine --deploy --config-append=/root/he.af
+
+- name: Obtain SSO token with using username/password credentials
+  ovirt_auth:
+    url: "https://engine.{% if ansible_distribution == 'RedHat' %}rhvh{% else %}ovirt{%endif%}/ovirt-engine/api"
+    username: admin@internal
+    password: "{{ engine_password }}"
+
+- name: Set diskcount
+  set_fact:
+    diskcount: "{{ ansible_facts.devices | select('match', '^(vd|sd)[a-z]+') | list | count }}"
+
+- debug:
+    var: diskcount
+    verbosity: 1
+
+- name: Setup vmstore domain
+  when: diskcount |int >= 3
+  ovirt_storage_domain:
+    auth: "{{ ovirt_auth }}"
+    name: "{{ item }}"
+    host: "node.{% if ansible_distribution == 'RedHat' %}rhvh{% else %}ovirt{%endif%}"
+    data_center: "default"
+    glusterfs:
+      address: "{{ ansible_default_ipv4.address }}"
+      path: "/{{ item }}"
+  with_items:
+    - vmstore

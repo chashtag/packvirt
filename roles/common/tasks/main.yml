@@ -1,0 +1,52 @@
+---
+- name: "Adjust {{ ansible_default_ipv4.interface }}"
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    regexp: '^{{item.k}}='
+    line: "{{item.k}}={{item.v}}"
+  with_items:
+    - k: ONBOOT
+      v: "yes"
+    - k: IPV6INIT
+      v: "no"
+    - k: IPV6_AUTOCONF
+      v: "no"
+    - k: IPV6_DEFROUTE
+      v: "no"
+  register: net
+
+- name: Restart network
+  when: net.changed
+  service:
+    name: network
+    state: restarted
+
+- name: Modify libvirt default network
+  replace:
+    path: /usr/share/libvirt/networks/default.xml
+    regexp: "{{item}}"
+    replace: "222"
+  with_items:
+    - "122"
+    - "124"
+
+- name: Stop libvirt default network
+  register: libv
+  failed_when: libv.rc >= 1 and "network 'default'" not in libv.stderr
+  shell: virsh -c qemu:///system?authfile=/etc/ovirt-hosted-engine/virsh_auth.conf net-destroy default
+
+- name: Render dnsmasq template
+  template:
+    src: files/dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+
+- name: Start dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted
+
+- name: Adjust dns to localhost
+  lineinfile:
+    path: /etc/resolv.conf
+    regexp: '^nameserver '
+    line: nameserver 127.0.0.1
