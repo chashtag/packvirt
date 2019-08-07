@@ -1,4 +1,5 @@
 # packVirt
+![XGH](https://raw.githubusercontent.com/chashtag/packvirt/images/XGH-Compilant-green.svg)
 Have you ever wanted a `packstack --allinone` but for oVirt?
 I did, so here you go!
 
@@ -55,3 +56,5 @@ Engine's username/password: admin/password
 ---
 ### How to run
 ssh to your node and ```[root@node ~]# ansible-playbook main.yml```
+
+
