@@ -1,5 +1,5 @@
 # packVirt
-![XGH](https://raw.githubusercontent.com/chashtag/packvirt/images/XGH-Compilant-green.svg)
+![XGH](https://raw.githubusercontent.com/chashtag/packvirt/master/images/XGH-Compilant-green.svg)
 Have you ever wanted a `packstack --allinone` but for oVirt?
 I did, so here you go!
 
