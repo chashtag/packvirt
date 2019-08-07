@@ -50,3 +50,8 @@ For example:
 ```
 
 Engine's username/password: admin/password
+
+
+---
+### How to run
+ssh to your node and ```[root@node ~]# ansible-playbook main.yml```
