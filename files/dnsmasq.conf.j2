@@ -6,7 +6,7 @@ no-hosts
 {% if ansible_distribution == "RedHat" %}
 domain=rhvh
 address=/engine.rhvh/{{ansible_default_ipv4.address.split('.')[:3] | join('.') }}.{{(ansible_default_ipv4.address.split('.')[3] |int) + 1 }}
-address=/node.ovirt/{{ansible_default_ipv4.address.split('.')[:3] | join('.') }}.{{(ansible_default_ipv4.address.split('.')[3] |int)}}
+address=/node.rhvh/{{ansible_default_ipv4.address.split('.')[:3] | join('.') }}.{{(ansible_default_ipv4.address.split('.')[3] |int)}}
 {% else %}
 domain=ovirt
 address=/engine.ovirt/{{ansible_default_ipv4.address.split('.')[:3] | join('.') }}.{{(ansible_default_ipv4.address.split('.')[3] |int) + 1 }}
